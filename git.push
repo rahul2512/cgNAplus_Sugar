@@ -1,0 +1,5 @@
+git add . ':!models' ':!Logs'
+git commit -m "Initial files generated"
+git branch -M main
+git remote add origin git@github.com:rahul2512/cgNAplus_Sugar.git
+git push -u origin master

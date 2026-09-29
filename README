@@ -1,0 +1,51 @@
+Arranged in the order of closeness from N atoms C1' -- (O4' or C2') --- (C3' or C4') -- C5'
+
+The issue with directly using Dihedral angle or pucker is the sesivity at borders
+
+14 Jan
+Using only the 4 atoms in the bases
+LM best performance 635/635 - 1s - loss: 0.0346 - mae: 0.1351 - val_loss: 0.0336 - val_mae: 0.1323
+NN gives ~0.3 both
+
+from keras import backend as K
+K.set_value(model.optimizer.learning_rate, 0.001)
+
+
+Next possible idea is to have separate model for purine and pyrimidine 
+
+Think about adding the sequence information as categorical variables. 
+
+
+
+
+
+P -- 31, 61, 93, 125
+31-61 --> 6.3923116
+61-93 --> 6.8339987
+93-125 --> 6.8487124
+
+
+
+96-97 -- C5'-O5' -- 1.4296582
+
+
+
+61-73 -- P-N1 --- 5.802414 --- 5.822599734247675
+60-73 -- O3   --- 5.929711 --- 5.124315909506578
+62-73 -- Op1  --- 6.984417 --- 6.030416798780962
+63-73 -- Op2  --- 5.991343 --- 7.224179829292024
+64-73 -- o5'  --- 4.531280 --- 5.377804098545667
+
+
+
+61-65 -- P-C5p ---  2.6277163 --- 2.557880
+60-65 -- O3    ---  2.9715517 --- 2.453944
+62-65 -- Op1   ---  3.0140440 --- 1.878727
+63-65 -- Op2   ---  3.8163114 --- 3.852676
+64-65 -- o5'   ---  1.4368560 --- 3.356294
+
+
+
+
+
+
