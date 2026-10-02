@@ -1,3 +1,210 @@
+#### This is work in progress
+
+# cgNA+Sugar
+
+## Introduction
+
+**cgNA+Sugar** is a machine-learning framework for reconstructing atomistic sugar coordinates in nucleic acids from the coarse-grained representation provided by **cgNA+**. Given the known base and phosphate coordinates of a DNA conformation, the goal is to predict the missing sugar atoms and thereby reconstruct a complete atomistic structure.
+
+The original implementation explored several machine-learning approaches and different representations of the local nucleotide environment. The current workflow aims to simplify this framework by using a unified model that can operate across different sequence contexts. The initial implementation should use all available base and phosphate atoms as input, with later experiments investigating whether a reduced set of atoms is sufficient for accurate reconstruction.
+
+
+## Code structure
+
+### `Data_loader.py`
+
+This is one of the most important modules in the repository.
+
+It contains functions for:
+
+- Loading **cgNA+ frame files**.
+- Loading the corresponding **atomistic trajectory/structure files**.
+- Extracting the required base, phosphate, and sugar coordinates.
+- Preprocessing the raw data into the input and output representations required for machine-learning models.
+- Organising data from multiple trajectories and sequence contexts into a consistent format.
+
+---
+
+### `Ideal_coords.py` and `Ideal_coords_2.py`
+
+These files define the ideal/reference atomic coordinates used when constructing the machine-learning input representation.
+
+Two versions are present because earlier experiments with linear models investigated whether accurate sugar reconstruction could be achieved using a reduced number of atoms.
+
+For the initial implementation, use:
+
+```python
+Ideal_coords_2.py
+```
+
+which uses the **full set of atoms**.
+
+The reduced representation can be investigated later to determine whether all atoms are necessary for accurate reconstruction.
+
+Any currently active alternative implementation should be disabled or removed so that `Ideal_coords_2.py` is used consistently.
+
+---
+
+### `classes.py`
+
+This module defines the data structures used to store and manipulate nucleic-acid molecules.
+
+The classes provide a convenient way to represent:
+
+- nucleotides,
+- base and phosphate coordinates,
+- sugar coordinates,
+- pucker and diherdral angles
+
+The purpose of this module is to make molecular information easier to access and pass between data-loading, training, prediction, and reconstruction routines.
+
+---
+
+### `pytorch_utilities.py`
+
+This should be the main starting point for developing the new machine-learning workflow.
+
+The existing functions contain most of the infrastructure required for model training and evaluation.
+
+A new function should be introduced, for example:
+
+```python
+initiate_LM_model(...)
+```
+
+This function should initialise and train the required machine-learning model.
+
+For the first implementation, an **XGBoost regressor (XGBR)** can be used. An example of how the XGBR training workflow can be organised is available in the `MoCap_ML_workflow` repository:
+
+`https://github.com/rahul2512/MoCap_ML_workflow/blob/main/pytorch_utilities.py`
+
+Ideally, most of the existing training workflow in this file can remain unchanged. The main modifications will involve:
+
+- introducing the new input representation,
+- adding the XGBR model,
+- handling missing/padded atoms where required,
+- and correctly treating nucleotides at the **5′ and 3′ ends** of linear DNA.
+
+Special handling of the ends will likely be the main structural modification required.
+
+---
+
+### `main.py`
+
+This is the main executable script for the workflow.
+
+It coordinates the different components of the repository, including:
+
+1. loading the molecular data,
+2. preprocessing the input,
+3. creating the training and test datasets,
+4. initialising the machine-learning model,
+5. training and evaluating the model,
+6. and saving the trained model and relevant outputs.
+
+The complete training workflow should ultimately be runnable from this file.
+
+---
+
+### `forward_pass.py`
+
+This module is used **after the model has been trained**.
+
+It loads a trained model and performs the forward prediction step to reconstruct sugar coordinates for new DNA conformations.
+
+Conceptually,
+
+```text
+Base + phosphate coordinates
+            ↓
+      trained ML model
+            ↓
+ predicted sugar coordinates
+```
+
+The resulting coordinates can then be passed to the reconstruction routines to generate the complete atomistic DNA structure.
+
+---
+
+### `fill_mini_circle.py`
+
+This script currently contains functionality for reconstructing complete structures, particularly for minicircular DNA.
+
+It should be modified so that the same reconstruction procedure can also be applied to **linear DNA**.
+
+The main additional consideration for linear DNA is appropriate treatment of the terminal nucleotides, since their local structural context differs from that of internal nucleotides.
+
+---
+
+## Input data organisation
+
+The input data should follow a standard directory structure. Each independent simulation or molecule should be stored in a numbered subdirectory, for example:
+
+```text
+data/
+├── 1/
+│   ├── frames
+│   └── trajectory
+├── 2/
+│   ├── frames
+│   └── trajectory
+├── 3/
+│   ├── frames
+│   └── trajectory
+└── ...
+```
+
+Each numbered directory should contain the corresponding:
+
+- **cgNA+ frame file**, and
+- **atomistic trajectory/structure file**.
+
+Maintaining the same directory structure for all datasets allows `Data_loader.py` to automatically iterate over simulations and construct a combined dataset for model training and testing.
+
+## Overall workflow
+
+```text
+Frames + atomistic trajectories
+             │
+             ▼
+       Data_loader.py
+             │
+             ▼
+       Preprocessed data
+             │
+             ▼
+    pytorch_utilities.py
+             │
+             ▼
+        Train model
+             │
+             ▼
+         main.py
+             │
+       Trained model
+             ▼
+      forward_pass.py
+             │
+             ▼
+ Predicted sugar coordinates
+             │
+             ▼
+    fill_mini_circle.py
+             │
+             ▼
+ Complete atomistic DNA structure
+```
+
+
+
+
+
+
+
+
+
+
+
 Arranged in the order of closeness from N atoms C1' -- (O4' or C2') --- (C3' or C4') -- C5'
 
 The issue with directly using Dihedral angle or pucker is the sesivity at borders
